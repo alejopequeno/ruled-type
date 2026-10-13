@@ -1,8 +1,50 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --rule: color-mix(in oklab, var(--foreground) 16%, transparent);
+  --guide: color-mix(in oklab, var(--foreground) 9%, transparent);
+  --text-box-tint: oklch(0.62 0.17 255 / 0.08);
+  --text-box-edge-color: oklch(0.55 0.17 255);
+  /* The desk the sheet of paper lies on. */
+  --desk: oklch(0.68 0 0);
+  /* The gray of the paper the rules are drawn on. */
+  --background: oklch(0.893 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.82 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  /* Darker than shadcn's default: the page is gray paper, not white. */
+  --border: oklch(0.78 0 0);
+  --input: oklch(0.62 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --radius: 0.625rem;
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
 }
 
 @theme inline {
@@ -10,17 +52,175 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --font-heading: var(--font-geist-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  /* next/font's variable: Geist, then its metric-matched fallback. */
+  font-family: var(--font-geist-sans), sans-serif;
+}
+
+/*
+ * Ruled paper. Every rule repeats once per line in a background tile 1lh
+ * tall, so it holds at any font size or line-height.
+ *
+ * Inside the tile the baseline sits at --tile-baseline, chosen so the cap
+ * height above it and the descender below it both fit. The tile grid is then
+ * shifted so that position lands on the block's real first baseline, which
+ * JS measures (--first-baseline): it depends on text-box (trim and edges) and
+ * on the font's ascent, which has no CSS unit.
+ *
+ * From the baseline, the guides are font units: cap height 1cap above it,
+ * x-height 1ex above it, the descender depth (measured, in em) below it.
+ */
+.ruled {
+  --stripe: 1px;
+  /* 0 keeps the rule on its guide, 1 drops it to the bottom of the tile. */
+  --rule-gap: 0;
+  --descender-depth: 0em;
+  --first-baseline: 1cap;
+  /* How far the last baseline sits above the block's bottom edge (measured). */
+  --trailing: 0px;
+
+  --tile-baseline: calc(1cap + (1lh - 1cap - var(--descender-depth)) / 2);
+  --at-cap-height: calc(var(--tile-baseline) - 1cap);
+  --at-x-height: calc(var(--tile-baseline) - 1ex);
+  --at-baseline: var(--tile-baseline);
+  --at-descender: calc(var(--tile-baseline) + var(--descender-depth));
+
+  --anchor: var(--at-baseline);
+  --room-below: calc(1lh - var(--anchor) - var(--stripe));
+  --at-rule: calc(var(--anchor) + var(--rule-gap) * var(--room-below));
+
+  margin: 0;
+  text-box-trim: var(--trim, trim-both);
+  text-box-edge: var(--edge, cap alphabetic);
+  /* Always room down to the bottom of the last line's tile: every guide and
+     any rule position fit there, so toggling guides or moving the rule never
+     changes the block's height (nothing on the page jumps). */
+  --pad: max(0px, calc(1lh - var(--tile-baseline) - var(--trailing)));
+  padding-bottom: var(--pad);
+  /* Content top is the block top (no padding-top), and border-box lets the
+     rules run under the side padding, edge to edge like ruled paper. */
+  background-repeat: repeat-y;
+  background-origin: border-box;
+  isolation: isolate;
+  background-clip: border-box;
+  background-size: 100% 1lh;
+  /* Slide the tiles so each tile's baseline lands on a real baseline. */
+  background-position: 0 calc(var(--first-baseline) - var(--tile-baseline));
+  --rule-layer: linear-gradient(
+    to bottom,
+    transparent var(--at-rule),
+    var(--rule) 0 calc(var(--at-rule) + var(--stripe)),
+    transparent 0
+  );
+  background-image: var(--rule-layer);
+}
+
+.ruled[data-rule-at="cap-height"] {
+  --anchor: var(--at-cap-height);
+}
+.ruled[data-rule-at="x-height"] {
+  --anchor: var(--at-x-height);
+}
+.ruled[data-rule-at="descender"] {
+  --anchor: var(--at-descender);
+}
+
+/* Each guide is a faint stripe starting at its position. */
+.ruled[data-guides] {
+  background-image:
+    var(--rule-layer),
+    linear-gradient(to bottom, transparent var(--at-cap-height), var(--guide) 0 calc(var(--at-cap-height) + var(--stripe)), transparent 0),
+    linear-gradient(to bottom, transparent var(--at-x-height), var(--guide) 0 calc(var(--at-x-height) + var(--stripe)), transparent 0),
+    linear-gradient(to bottom, transparent var(--at-baseline), var(--guide) 0 calc(var(--at-baseline) + var(--stripe)), transparent 0),
+    linear-gradient(to bottom, transparent var(--at-descender), var(--guide) 0 calc(var(--at-descender) + var(--stripe)), transparent 0);
+}
+
+/* Rules off: keep the paper (and the guides, if on) but drop the rule. */
+.ruled[data-no-rules] {
+  --rule: transparent;
+}
+
+/*
+ * The text box: a tint from the block's top edge to its bottom edge (before
+ * the padding that makes room for the last rule), so changing text-box-trim
+ * or its edges shows where the block now starts and ends.
+ */
+.ruled[data-show-box]::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 var(--pad);
+  z-index: -1;
+  background: var(--text-box-tint);
+  border-block: 1px dashed var(--text-box-edge-color);
+  pointer-events: none;
+}
+.ruled[data-show-box]::after {
+  content: "text box";
+  position: absolute;
+  top: 0;
+  right: 0;
+  translate: 0 -100%;
+  padding: 2px 6px;
+  border-radius: 4px 4px 0 0;
+  background: var(--text-box-edge-color);
+  color: white;
+  font: 500 10px/1.2 var(--font-geist-mono), monospace;
+  letter-spacing: 0.02em;
+  pointer-events: none;
+}
+
+/* No rules until the baselines have been measured, rather than wrong ones. */
+.ruled:not([data-measured]) {
+  background-image: none;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
 }
